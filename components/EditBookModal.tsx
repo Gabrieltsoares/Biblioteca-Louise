@@ -1,20 +1,9 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { NewBook, GoogleBookItem } from '@/types';
+import { Book, NewBook } from '@/types';
 
 const RATING_LABELS = ['', 'Ruim', 'Regular', 'Bom', 'Ótimo', 'Excelente'];
-
-interface SearchResult {
-  title: string;
-  author: string;
-  cover: string;
-}
-
-interface AddBookModalProps {
-  onClose: () => void;
-  onSave: (book: NewBook) => Promise<void>;
-}
 
 function compressImage(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -42,62 +31,32 @@ function compressImage(file: File): Promise<string> {
   });
 }
 
-export default function AddBookModal({ onClose, onSave }: AddBookModalProps) {
-  const [query, setQuery]             = useState('');
-  const [results, setResults]         = useState<SearchResult[]>([]);
-  const [showResults, setShowResults] = useState(false);
-  const [isSearching, setIsSearching] = useState(false);
+interface EditBookModalProps {
+  book: Book;
+  onClose: () => void;
+  onSave: (id: string, data: Partial<NewBook>) => Promise<void>;
+}
 
-  const [title, setTitle]     = useState('');
-  const [author, setAuthor]   = useState('');
-  const [cover, setCover]     = useState('');
-  const [rating, setRating]   = useState(0);
+export default function EditBookModal({ book, onClose, onSave }: EditBookModalProps) {
+  const [title, setTitle]     = useState(book.title);
+  const [author, setAuthor]   = useState(book.author);
+  const [cover, setCover]     = useState(book.cover);
+  const [rating, setRating]   = useState(book.rating);
   const [hoverRating, setHoverRating] = useState(0);
-  const [read, setRead]       = useState(true);
-  const [comment, setComment] = useState('');
+  const [read, setRead]       = useState(book.read ?? true);
+  const [comment, setComment] = useState(book.comment ?? '');
 
   const [error, setError]           = useState('');
   const [saving, setSaving]         = useState(false);
   const [uploadError, setUploadError] = useState('');
 
-  const searchInputRef = useRef<HTMLInputElement>(null);
-  const fileInputRef   = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    searchInputRef.current?.focus();
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, [onClose]);
-
-  async function handleSearch() {
-    const q = query.trim();
-    if (!q) return;
-    setIsSearching(true);
-    setShowResults(false);
-    try {
-      const url = `https://www.googleapis.com/books/v1/volumes?q=intitle:${encodeURIComponent(q)}+inauthor:${encodeURIComponent(q)}&maxResults=15&fields=items(volumeInfo(title,authors,imageLinks))`;
-      const res = await fetch(url);
-      if (!res.ok) throw new Error();
-      const data = await res.json();
-      const items: GoogleBookItem[] = data.items || [];
-      setResults(items.map((item) => {
-        const info = item.volumeInfo;
-        const rawCover = info.imageLinks?.thumbnail || info.imageLinks?.smallThumbnail || '';
-        return {
-          title:  info.title || 'Sem título',
-          author: info.authors ? info.authors.join(', ') : 'Autor desconhecido',
-          cover:  rawCover.replace(/^http:\/\//, 'https://'),
-        };
-      }));
-    } catch { setResults([]); }
-    finally { setIsSearching(false); setShowResults(true); }
-  }
-
-  function handleSelect(r: SearchResult) {
-    setTitle(r.title); setAuthor(r.author); setCover(r.cover);
-    setShowResults(false); setError(''); setUploadError('');
-  }
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -105,20 +64,17 @@ export default function AddBookModal({ onClose, onSave }: AddBookModalProps) {
     if (!file.type.startsWith('image/')) { setUploadError('Selecione uma imagem válida.'); return; }
     if (file.size > 5 * 1024 * 1024) { setUploadError('Imagem deve ter menos de 5MB.'); return; }
     setUploadError('');
-    try {
-      setCover(await compressImage(file));
-      setError('');
-    } catch { setUploadError('Não foi possível processar a imagem.'); }
+    try { setCover(await compressImage(file)); } catch { setUploadError('Não foi possível processar a imagem.'); }
     e.target.value = '';
   }
 
   async function handleSave() {
-    if (!title.trim()) { setError('Por favor, informe o título do livro.'); return; }
-    if (!author.trim()) { setError('Por favor, informe o nome do autor.'); return; }
-    if (rating === 0) { setError('Por favor, atribua uma nota ao livro.'); return; }
+    if (!title.trim()) { setError('Por favor, informe o título.'); return; }
+    if (!author.trim()) { setError('Por favor, informe o autor.'); return; }
+    if (rating === 0) { setError('Por favor, atribua uma nota.'); return; }
     setSaving(true);
     try {
-      await onSave({ title: title.trim(), author: author.trim(), cover, rating, read, comment: comment.trim(), dateAdded: new Date().toISOString() });
+      await onSave(book.id, { title: title.trim(), author: author.trim(), cover, rating, read, comment: comment.trim() });
     } finally { setSaving(false); }
   }
 
@@ -128,7 +84,7 @@ export default function AddBookModal({ onClose, onSave }: AddBookModalProps) {
     <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="modal">
         <div className="modal-header">
-          <h2>Adicionar Livro</h2>
+          <h2>Editar Livro</h2>
           <button className="modal-close" onClick={onClose} aria-label="Fechar">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
@@ -137,51 +93,11 @@ export default function AddBookModal({ onClose, onSave }: AddBookModalProps) {
         </div>
 
         <div className="modal-body">
-          {/* Search */}
-          <div className="form-section">
-            <label className="form-label">Buscar na base de livros</label>
-            <div className="search-input-row">
-              <div className="input-icon-wrap flex-1">
-                <svg className="input-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
-                </svg>
-                <input ref={searchInputRef} type="text" value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                  placeholder="Título ou nome do autor..." />
-              </div>
-              <button className="btn-search" onClick={handleSearch} disabled={isSearching}>
-                {isSearching ? <span className="spinner" /> : 'Buscar'}
-              </button>
-            </div>
-            <p className="hint">Pesquise por título ou autor, ou preencha os campos abaixo manualmente.</p>
-          </div>
-
-          {/* Results */}
-          {showResults && (
-            <div className="search-results">
-              {results.length === 0
-                ? <p className="results-message">Nenhum livro encontrado. Preencha manualmente.</p>
-                : results.map((r, i) => (
-                  <div key={i} className="result-item" onClick={() => handleSelect(r)}>
-                    {r.cover
-                      // eslint-disable-next-line @next/next/no-img-element
-                      ? <img className="result-thumb" src={r.cover} alt={r.title} loading="lazy" />
-                      : <div className="result-no-thumb">{r.title[0]}</div>}
-                    <div className="result-info">
-                      <div className="result-title">{r.title}</div>
-                      <div className="result-author">{r.author}</div>
-                    </div>
-                  </div>
-                ))}
-            </div>
-          )}
-
           {/* Preview + fields */}
           <div className="book-form-preview">
             <div className="cover-upload-wrap">
               <div className="cover-preview-box cover-preview-clickable"
-                onClick={() => fileInputRef.current?.click()} title="Clique para enviar uma capa">
+                onClick={() => fileInputRef.current?.click()} title="Clique para trocar a capa">
                 {cover
                   // eslint-disable-next-line @next/next/no-img-element
                   ? <img src={cover} alt="Capa" />
@@ -260,14 +176,14 @@ export default function AddBookModal({ onClose, onSave }: AddBookModalProps) {
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               placeholder="O que você achou deste livro? (opcional)"
-              rows={3}
+              rows={4}
             />
           </div>
 
           {error && <div className="form-error">{error}</div>}
 
           <button className="btn-save" onClick={handleSave} disabled={saving}>
-            {saving ? 'Salvando…' : 'Salvar na Biblioteca'}
+            {saving ? 'Salvando…' : 'Salvar alterações'}
           </button>
         </div>
       </div>

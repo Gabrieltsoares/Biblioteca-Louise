@@ -1,9 +1,11 @@
 export interface Book {
-  id: string;       // Firestore document ID
+  id: string;
   title: string;
   author: string;
   cover: string;
   rating: number;
+  read: boolean;
+  comment: string;
   dateAdded: string;
 }
 

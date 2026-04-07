@@ -365,13 +365,81 @@ main {
   z-index: 1;
 }
 
-.delete-btn {
+/* ---- Read / Unread visual effects ---- */
+.book-read {
+  border-color: var(--border-soft);
+}
+
+.book-unread {
+  border-color: #e8c8d8;
+  opacity: 0.82;
+}
+
+.book-unread .book-cover-wrap img,
+.book-unread .no-cover-placeholder {
+  filter: grayscale(45%) brightness(0.95);
+}
+
+.book-unread .book-title-card { color: var(--text-secondary); }
+
+.unread-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(160deg, rgba(255,255,255,0) 60%, rgba(200,180,190,0.18) 100%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Read badge */
+.read-badge {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.5rem;
+  border-radius: 50px;
+  z-index: 3;
+  backdrop-filter: blur(4px);
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity var(--transition), transform var(--transition);
+}
+
+.book-card:hover .read-badge { opacity: 1; transform: translateY(0); }
+
+.badge-read {
+  background: rgba(255,255,255,0.92);
+  color: #3a9e6a;
+  border: 1px solid rgba(58,158,106,0.25);
+}
+
+.badge-unread {
+  background: rgba(255,255,255,0.92);
+  color: #b07030;
+  border: 1px solid rgba(176,112,48,0.25);
+}
+
+/* Card action buttons (edit + delete) */
+.card-actions {
   position: absolute;
   top: 0.5rem;
   right: 0.5rem;
-  width: 28px;
-  height: 28px;
-  background: rgba(255, 255, 255, 0.92);
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  z-index: 2;
+}
+
+.card-action-btn {
+  width: 26px;
+  height: 26px;
+  background: rgba(255,255,255,0.92);
   border: 1px solid rgba(212, 82, 122, 0.2);
   color: var(--text-secondary);
   border-radius: 50%;
@@ -381,11 +449,46 @@ main {
   opacity: 0;
   transition: opacity var(--transition), background var(--transition), color var(--transition), border-color var(--transition);
   backdrop-filter: blur(4px);
-  z-index: 2;
 }
 
-.book-card:hover .delete-btn { opacity: 1; }
+.book-card:hover .card-action-btn { opacity: 1; }
+.edit-btn:hover { background: var(--accent-pale); color: var(--accent); border-color: var(--accent-light); }
 .delete-btn:hover { background: var(--danger); color: white; border-color: var(--danger); }
+
+/* Card comment */
+.card-comment-wrap {
+  margin-top: 0.6rem;
+  border-top: 1px dashed var(--border);
+  padding-top: 0.5rem;
+}
+
+.comment-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.72rem;
+  color: var(--accent);
+  font-weight: 600;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: opacity var(--transition);
+}
+
+.comment-toggle:hover { opacity: 0.75; }
+
+.card-comment-text {
+  margin-top: 0.5rem;
+  font-size: 0.77rem;
+  color: var(--text-secondary);
+  line-height: 1.55;
+  font-style: italic;
+  background: var(--surface2);
+  border-left: 2px solid var(--border);
+  padding: 0.5rem 0.6rem;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
 
 .book-info {
   padding: 0.9rem 0.9rem 0.8rem;
@@ -655,6 +758,14 @@ main {
   align-items: flex-start;
 }
 
+.cover-upload-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
 .cover-preview-box {
   width: 80px;
   height: 112px;
@@ -667,9 +778,9 @@ main {
   gap: 0.25rem;
   color: var(--text-muted);
   font-size: 0.65rem;
-  flex-shrink: 0;
   overflow: hidden;
   background: linear-gradient(135deg, #fef5f8, #fde8f0);
+  position: relative;
 }
 
 .cover-preview-box img {
@@ -677,6 +788,74 @@ main {
   height: 100%;
   object-fit: cover;
   border-radius: calc(var(--radius-sm) - 2px);
+}
+
+.cover-preview-clickable {
+  cursor: pointer;
+  transition: border-color var(--transition);
+}
+
+.cover-preview-clickable:hover { border-color: var(--accent-light); }
+
+.cover-upload-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(212, 82, 122, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  opacity: 0;
+  transition: opacity var(--transition);
+  border-radius: calc(var(--radius-sm) - 2px);
+}
+
+.cover-preview-clickable:hover .cover-upload-overlay { opacity: 1; }
+
+.cover-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.btn-upload-cover {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--accent);
+  background: var(--accent-pale);
+  border: 1px solid var(--border);
+  border-radius: 50px;
+  padding: 0.25rem 0.6rem;
+  transition: background var(--transition), border-color var(--transition);
+  white-space: nowrap;
+}
+
+.btn-upload-cover:hover { background: #fad9e7; border-color: var(--accent-light); }
+
+.btn-remove-cover {
+  width: 20px;
+  height: 20px;
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--transition), color var(--transition);
+}
+
+.btn-remove-cover:hover { background: var(--danger); color: white; border-color: var(--danger); }
+
+.file-input-hidden { display: none; }
+
+.upload-error {
+  font-size: 0.72rem;
+  color: var(--danger);
+  text-align: center;
+  max-width: 80px;
+  line-height: 1.3;
 }
 
 .book-form-fields {
@@ -978,3 +1157,65 @@ main {
   border-color: var(--border) !important;
   border-top-color: var(--accent) !important;
 }
+
+/* =============================================
+   READ TOGGLE
+   ============================================= */
+.read-toggle {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.5rem 1rem;
+  border-radius: 50px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  border: 1.5px solid var(--border);
+  color: var(--text-muted);
+  background: var(--surface2);
+  transition: all var(--transition);
+  cursor: pointer;
+}
+
+.toggle-btn:hover { border-color: var(--accent-light); color: var(--text-secondary); }
+
+.toggle-active-read {
+  background: #edfaf3;
+  border-color: #3a9e6a;
+  color: #3a9e6a;
+}
+
+.toggle-active-unread {
+  background: #fff6ec;
+  border-color: #b07030;
+  color: #b07030;
+}
+
+/* =============================================
+   COMMENT TEXTAREA
+   ============================================= */
+.comment-textarea {
+  width: 100%;
+  background: var(--surface2);
+  border: 1.5px solid var(--border);
+  color: var(--text);
+  border-radius: var(--radius-sm);
+  padding: 0.7rem 0.9rem;
+  font-size: 0.875rem;
+  font-family: var(--font-body);
+  outline: none;
+  resize: vertical;
+  line-height: 1.55;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.comment-textarea:focus {
+  border-color: var(--accent-light);
+  box-shadow: 0 0 0 3px rgba(212, 82, 122, 0.1);
+}
+
+.comment-textarea::placeholder { color: var(--text-muted); font-style: italic; }

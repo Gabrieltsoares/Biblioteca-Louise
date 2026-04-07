@@ -8,6 +8,7 @@ import {
   onSnapshot,
   addDoc,
   deleteDoc,
+  updateDoc,
   doc,
 } from 'firebase/firestore';
 import { getDb } from '@/lib/firebase';
@@ -23,23 +24,18 @@ export function useLibrary(userId: string | null) {
       setLoading(false);
       return;
     }
-
     setLoading(true);
-
-    // getDb() called inside useEffect — browser only
     const db = getDb();
     const q = query(
       collection(db, 'users', userId, 'books'),
       orderBy('dateAdded', 'desc'),
     );
-
     const unsubscribe = onSnapshot(q, (snapshot) => {
       setBooks(
         snapshot.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Book, 'id'>) })),
       );
       setLoading(false);
     });
-
     return unsubscribe;
   }, [userId]);
 
@@ -49,11 +45,17 @@ export function useLibrary(userId: string | null) {
     await addDoc(collection(db, 'users', userId, 'books'), book);
   }
 
+  async function updateBook(id: string, data: Partial<NewBook>) {
+    if (!userId) return;
+    const db = getDb();
+    await updateDoc(doc(db, 'users', userId, 'books', id), data);
+  }
+
   async function removeBook(id: string) {
     if (!userId) return;
     const db = getDb();
     await deleteDoc(doc(db, 'users', userId, 'books', id));
   }
 
-  return { books, loading, addBook, removeBook };
+  return { books, loading, addBook, updateBook, removeBook };
 }

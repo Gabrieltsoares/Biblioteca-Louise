@@ -8,6 +8,7 @@ import Header from './Header';
 import FiltersBar from './FiltersBar';
 import BooksGrid from './BooksGrid';
 import AddBookModal from './AddBookModal';
+import EditBookModal from './EditBookModal';
 import DeleteModal from './DeleteModal';
 import LoginScreen from './LoginScreen';
 
@@ -33,9 +34,10 @@ function getFilteredSorted(
 
 export default function LibraryApp() {
   const { user, loading: authLoading } = useAuth();
-  const { books, loading: booksLoading, addBook, removeBook } = useLibrary(user?.uid ?? null);
+  const { books, loading: booksLoading, addBook, updateBook, removeBook } = useLibrary(user?.uid ?? null);
 
   const [isAddOpen, setIsAddOpen]         = useState(false);
+  const [editPending, setEditPending]     = useState<Book | null>(null);
   const [deletePending, setDeletePending] = useState<Book | null>(null);
   const [sortBy, setSortBy]               = useState<SortOption>('dateAdded');
   const [filterRating, setFilterRating]   = useState(0);
@@ -46,7 +48,6 @@ export default function LibraryApp() {
     [books, sortBy, filterRating, authorSearch],
   );
 
-  // Auth loading
   if (authLoading) {
     return (
       <div className="full-loader">
@@ -55,12 +56,16 @@ export default function LibraryApp() {
     );
   }
 
-  // Not logged in
   if (!user) return <LoginScreen />;
 
   async function handleSave(book: NewBook) {
     await addBook(book);
     setIsAddOpen(false);
+  }
+
+  async function handleUpdate(id: string, data: Partial<NewBook>) {
+    await updateBook(id, data);
+    setEditPending(null);
   }
 
   async function handleDeleteConfirm() {
@@ -100,6 +105,7 @@ export default function LibraryApp() {
             books={filtered}
             totalBooks={books.length}
             onDeleteBook={setDeletePending}
+            onEditBook={setEditPending}
             onAddBook={() => setIsAddOpen(true)}
             onClearFilters={clearFilters}
           />
@@ -108,6 +114,14 @@ export default function LibraryApp() {
 
       {isAddOpen && (
         <AddBookModal onClose={() => setIsAddOpen(false)} onSave={handleSave} />
+      )}
+
+      {editPending && (
+        <EditBookModal
+          book={editPending}
+          onClose={() => setEditPending(null)}
+          onSave={handleUpdate}
+        />
       )}
 
       {deletePending && (
