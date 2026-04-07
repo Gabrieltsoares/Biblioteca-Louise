@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Biblioteca Virtual Louise</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header>
+    <div class="header-inner">
+      <div class="logo">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+        </svg>
+        <h1>Biblioteca Virtual <span>Louise</span></h1>
+      </div>
+      <button id="addBookBtn" class="btn-add">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        Adicionar Livro
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <section class="filters-bar">
+      <div class="stats" id="statsLabel">0 livros</div>
+      <div class="filters-group">
+        <div class="filter-item">
+          <label>Ordenar por</label>
+          <select id="sortBy">
+            <option value="dateAdded">Mais recentes</option>
+            <option value="title">Título A→Z</option>
+            <option value="titleDesc">Título Z→A</option>
+            <option value="author">Autor A→Z</option>
+            <option value="rating">Maior nota</option>
+            <option value="ratingAsc">Menor nota</option>
+          </select>
+        </div>
+        <div class="filter-item">
+          <label>Nota mínima</label>
+          <select id="filterRating">
+            <option value="0">Todas as notas</option>
+            <option value="5">★★★★★ apenas</option>
+            <option value="4">★★★★ ou mais</option>
+            <option value="3">★★★ ou mais</option>
+            <option value="2">★★ ou mais</option>
+          </select>
+        </div>
+        <div class="filter-item">
+          <label>Buscar autor</label>
+          <div class="input-icon-wrap">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input type="text" id="searchAuthor" placeholder="Nome do autor...">
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div id="booksGrid" class="books-grid"></div>
+
+    <div id="emptyState" class="empty-state">
+      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+      </svg>
+      <h2>Sua biblioteca está vazia</h2>
+      <p>Adicione seu primeiro livro lido para começar sua coleção.</p>
+      <button class="btn-add" onclick="document.getElementById('addBookBtn').click()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        Adicionar Livro
+      </button>
+    </div>
+
+    <div id="noFilterResults" class="no-filter-results hidden">
+      <p>Nenhum livro encontrado com os filtros aplicados.</p>
+      <button class="btn-ghost" onclick="clearFilters()">Limpar filtros</button>
+    </div>
+  </main>
+
+  <!-- Modal Overlay -->
+  <div id="modalOverlay" class="modal-overlay hidden" role="dialog" aria-modal="true">
+    <div class="modal" id="modal">
+      <div class="modal-header">
+        <h2>Adicionar Livro</h2>
+        <button class="modal-close" id="closeModal" aria-label="Fechar">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Step 1: Search -->
+        <div class="form-section">
+          <label class="form-label">Buscar na base de livros</label>
+          <div class="search-input-row">
+            <div class="input-icon-wrap flex-1">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+              <input type="text" id="bookSearch" placeholder="Digite o título do livro..." autocomplete="off">
+            </div>
+            <button id="searchBtn" class="btn-search">
+              <span id="searchBtnText">Buscar</span>
+              <span id="searchSpinner" class="spinner hidden"></span>
+            </button>
+          </div>
+          <p class="hint">Pesquise para encontrar a capa automaticamente, ou preencha os campos abaixo manualmente.</p>
+        </div>
+
+        <!-- Search Results -->
+        <div id="searchResults" class="search-results hidden"></div>
+
+        <!-- Book Preview / Manual Fields -->
+        <div class="book-form-preview">
+          <div class="cover-preview-box" id="coverBox">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+            </svg>
+            <span>Capa</span>
+          </div>
+          <div class="book-form-fields">
+            <div class="form-group">
+              <label class="form-label">Título <span class="required">*</span></label>
+              <input type="text" id="bookTitle" placeholder="Título do livro" autocomplete="off">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Autor <span class="required">*</span></label>
+              <input type="text" id="bookAuthor" placeholder="Nome do autor" autocomplete="off">
+            </div>
+          </div>
+        </div>
+
+        <!-- Rating -->
+        <div class="form-section">
+          <label class="form-label">Sua nota <span class="required">*</span></label>
+          <div class="star-picker" id="starPicker">
+            <button class="star-btn" data-value="1" aria-label="1 estrela">★</button>
+            <button class="star-btn" data-value="2" aria-label="2 estrelas">★</button>
+            <button class="star-btn" data-value="3" aria-label="3 estrelas">★</button>
+            <button class="star-btn" data-value="4" aria-label="4 estrelas">★</button>
+            <button class="star-btn" data-value="5" aria-label="5 estrelas">★</button>
+          </div>
+          <span class="rating-label" id="ratingLabel">Selecione uma nota</span>
+        </div>
+
+        <div id="formError" class="form-error hidden"></div>
+
+        <button id="saveBook" class="btn-save">Salvar na Biblioteca</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Confirm Modal -->
+  <div id="deleteOverlay" class="modal-overlay hidden">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <h2>Remover livro</h2>
+      </div>
+      <div class="modal-body">
+        <p id="deleteMessage" style="color: var(--text-secondary); margin-bottom: 1.5rem;">Tem certeza que deseja remover este livro?</p>
+        <div style="display: flex; gap: 0.75rem;">
+          <button class="btn-ghost flex-1" onclick="cancelDelete()">Cancelar</button>
+          <button class="btn-danger flex-1" onclick="confirmDelete()">Remover</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
