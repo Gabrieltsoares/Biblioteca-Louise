@@ -12,14 +12,19 @@ import EditBookModal from './EditBookModal';
 import DeleteModal from './DeleteModal';
 import LoginScreen from './LoginScreen';
 
+type ReadFilter = 'all' | 'read' | 'unread';
+
 function getFilteredSorted(
   books: Book[],
   sortBy: SortOption,
   filterRating: number,
   authorSearch: string,
+  readFilter: ReadFilter,
 ): Book[] {
   let list = [...books];
   if (filterRating > 0) list = list.filter((b) => b.rating >= filterRating);
+  if (readFilter === 'read')   list = list.filter((b) => b.read ?? true);
+  if (readFilter === 'unread') list = list.filter((b) => !(b.read ?? true));
   const q = authorSearch.trim().toLowerCase();
   if (q) list = list.filter((b) => b.author.toLowerCase().includes(q));
   switch (sortBy) {
@@ -42,18 +47,18 @@ export default function LibraryApp() {
   const [sortBy, setSortBy]               = useState<SortOption>('dateAdded');
   const [filterRating, setFilterRating]   = useState(0);
   const [authorSearch, setAuthorSearch]   = useState('');
+  const [readFilter, setReadFilter]       = useState<ReadFilter>('all');
+
+  const readCount   = useMemo(() => books.filter((b) => b.read ?? true).length, [books]);
+  const unreadCount = useMemo(() => books.filter((b) => !(b.read ?? true)).length, [books]);
 
   const filtered = useMemo(
-    () => getFilteredSorted(books, sortBy, filterRating, authorSearch),
-    [books, sortBy, filterRating, authorSearch],
+    () => getFilteredSorted(books, sortBy, filterRating, authorSearch, readFilter),
+    [books, sortBy, filterRating, authorSearch, readFilter],
   );
 
   if (authLoading) {
-    return (
-      <div className="full-loader">
-        <span className="spinner spinner-lg" />
-      </div>
-    );
+    return <div className="full-loader"><span className="spinner spinner-lg" /></div>;
   }
 
   if (!user) return <LoginScreen />;
@@ -79,6 +84,7 @@ export default function LibraryApp() {
     setSortBy('dateAdded');
     setFilterRating(0);
     setAuthorSearch('');
+    setReadFilter('all');
   }
 
   return (
@@ -88,12 +94,16 @@ export default function LibraryApp() {
       <main>
         <FiltersBar
           bookCount={books.length}
+          readCount={readCount}
+          unreadCount={unreadCount}
           sortBy={sortBy}
           onSortChange={setSortBy}
           filterRating={filterRating}
           onRatingFilterChange={setFilterRating}
           authorSearch={authorSearch}
           onAuthorSearchChange={setAuthorSearch}
+          readFilter={readFilter}
+          onReadFilterChange={setReadFilter}
         />
 
         {booksLoading ? (
@@ -115,21 +125,11 @@ export default function LibraryApp() {
       {isAddOpen && (
         <AddBookModal onClose={() => setIsAddOpen(false)} onSave={handleSave} />
       )}
-
       {editPending && (
-        <EditBookModal
-          book={editPending}
-          onClose={() => setEditPending(null)}
-          onSave={handleUpdate}
-        />
+        <EditBookModal book={editPending} onClose={() => setEditPending(null)} onSave={handleUpdate} />
       )}
-
       {deletePending && (
-        <DeleteModal
-          book={deletePending}
-          onConfirm={handleDeleteConfirm}
-          onCancel={() => setDeletePending(null)}
-        />
+        <DeleteModal book={deletePending} onConfirm={handleDeleteConfirm} onCancel={() => setDeletePending(null)} />
       )}
     </>
   );

@@ -1,28 +1,65 @@
 import { SortOption } from '@/types';
 
+type ReadFilter = 'all' | 'read' | 'unread';
+
 interface FiltersBarProps {
   bookCount: number;
+  readCount: number;
+  unreadCount: number;
   sortBy: SortOption;
   onSortChange: (v: SortOption) => void;
   filterRating: number;
   onRatingFilterChange: (v: number) => void;
   authorSearch: string;
   onAuthorSearchChange: (v: string) => void;
+  readFilter: ReadFilter;
+  onReadFilterChange: (v: ReadFilter) => void;
 }
 
 export default function FiltersBar({
   bookCount,
+  readCount,
+  unreadCount,
   sortBy,
   onSortChange,
   filterRating,
   onRatingFilterChange,
   authorSearch,
   onAuthorSearchChange,
+  readFilter,
+  onReadFilterChange,
 }: FiltersBarProps) {
   return (
     <section className="filters-bar">
-      <div className="stats">
-        {bookCount} {bookCount === 1 ? 'livro' : 'livros'}
+      {/* Read status pill filters */}
+      <div className="read-filter-pills">
+        <button
+          className={`read-pill${readFilter === 'all' ? ' pill-active-all' : ''}`}
+          onClick={() => onReadFilterChange('all')}
+        >
+          Todos
+          <span className="pill-count">{bookCount}</span>
+        </button>
+        <button
+          className={`read-pill${readFilter === 'read' ? ' pill-active-read' : ''}`}
+          onClick={() => onReadFilterChange('read')}
+        >
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+          Lidos
+          <span className="pill-count">{readCount}</span>
+        </button>
+        <button
+          className={`read-pill${readFilter === 'unread' ? ' pill-active-unread' : ''}`}
+          onClick={() => onReadFilterChange('unread')}
+        >
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
+          Não lidos
+          <span className="pill-count">{unreadCount}</span>
+        </button>
       </div>
 
       <div className="filters-group">
@@ -40,10 +77,7 @@ export default function FiltersBar({
 
         <div className="filter-item">
           <label>Nota mínima</label>
-          <select
-            value={filterRating}
-            onChange={(e) => onRatingFilterChange(Number(e.target.value))}
-          >
+          <select value={filterRating} onChange={(e) => onRatingFilterChange(Number(e.target.value))}>
             <option value={0}>Todas as notas</option>
             <option value={5}>★★★★★ apenas</option>
             <option value={4}>★★★★ ou mais</option>

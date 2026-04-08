@@ -217,6 +217,76 @@ main {
   backdrop-filter: blur(8px);
 }
 
+/* Read filter pills */
+.read-filter-pills {
+  display: flex;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.read-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: 50px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: 1.5px solid var(--border);
+  color: var(--text-muted);
+  background: var(--surface);
+  cursor: pointer;
+  transition: all var(--transition);
+  white-space: nowrap;
+}
+
+.read-pill:hover { border-color: var(--accent-light); color: var(--text-secondary); }
+
+.pill-count {
+  background: var(--border);
+  color: var(--text-muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+  border-radius: 50px;
+  padding: 0.05rem 0.4rem;
+  min-width: 18px;
+  text-align: center;
+  transition: background var(--transition), color var(--transition);
+}
+
+.pill-active-all {
+  background: var(--accent-pale);
+  border-color: var(--accent-light);
+  color: var(--accent);
+}
+
+.pill-active-all .pill-count {
+  background: var(--accent);
+  color: white;
+}
+
+.pill-active-read {
+  background: #edfaf3;
+  border-color: #3a9e6a;
+  color: #2d8a5e;
+}
+
+.pill-active-read .pill-count {
+  background: #3a9e6a;
+  color: white;
+}
+
+.pill-active-unread {
+  background: #fff8ec;
+  border-color: #d4900a;
+  color: #b07030;
+}
+
+.pill-active-unread .pill-count {
+  background: #d4900a;
+  color: white;
+}
+
 .stats {
   font-size: 0.85rem;
   color: var(--text-muted);
@@ -367,63 +437,84 @@ main {
 
 /* ---- Read / Unread visual effects ---- */
 .book-read {
-  border-color: var(--border-soft);
+  border-color: #b8e4cc;
+  border-width: 2px;
+}
+
+.book-read:hover {
+  border-color: #3a9e6a;
+  box-shadow: 0 6px 28px rgba(58, 158, 106, 0.18);
 }
 
 .book-unread {
-  border-color: #e8c8d8;
-  opacity: 0.82;
+  border-color: #f5c97a;
+  border-width: 2px;
 }
 
-.book-unread .book-cover-wrap img,
+.book-unread:hover {
+  border-color: #d4900a;
+  box-shadow: 0 6px 28px rgba(212, 144, 10, 0.18);
+}
+
+.book-unread .book-cover-wrap img {
+  filter: grayscale(60%) brightness(0.88) saturate(0.6);
+}
+
 .book-unread .no-cover-placeholder {
-  filter: grayscale(45%) brightness(0.95);
+  filter: grayscale(40%) brightness(0.92);
 }
-
-.book-unread .book-title-card { color: var(--text-secondary); }
 
 .unread-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(160deg, rgba(255,255,255,0) 60%, rgba(200,180,190,0.18) 100%);
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 18px,
+    rgba(180, 140, 40, 0.055) 18px,
+    rgba(180, 140, 40, 0.055) 20px
+  );
   pointer-events: none;
   z-index: 1;
 }
 
-/* Read badge */
-.read-badge {
+/* Status banner — always visible, bottom of cover */
+.status-banner {
   position: absolute;
-  top: 0.5rem;
-  left: 0.5rem;
+  bottom: 0;
+  left: 0;
+  right: 0;
   display: flex;
   align-items: center;
-  gap: 0.2rem;
-  font-size: 0.62rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
+  justify-content: center;
+  gap: 0.3rem;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  padding: 0.2rem 0.5rem;
-  border-radius: 50px;
+  padding: 0.35rem 0.5rem;
   z-index: 3;
-  backdrop-filter: blur(4px);
-  opacity: 0;
-  transform: translateY(-4px);
-  transition: opacity var(--transition), transform var(--transition);
 }
 
-.book-card:hover .read-badge { opacity: 1; transform: translateY(0); }
-
-.badge-read {
-  background: rgba(255,255,255,0.92);
-  color: #3a9e6a;
-  border: 1px solid rgba(58,158,106,0.25);
+.banner-read {
+  background: linear-gradient(90deg, #2d8a5e, #3ab07a);
+  color: #fff;
 }
 
-.badge-unread {
-  background: rgba(255,255,255,0.92);
-  color: #b07030;
-  border: 1px solid rgba(176,112,48,0.25);
+.banner-unread {
+  background: linear-gradient(90deg, #c07c10, #e09a20);
+  color: #fff;
 }
+
+/* Thin colored bar below cover */
+.card-status-bar {
+  height: 3px;
+  width: 100%;
+  flex-shrink: 0;
+}
+
+.bar-read    { background: linear-gradient(90deg, #3a9e6a, #68d4a0); }
+.bar-unread  { background: linear-gradient(90deg, #c07c10, #f0b840); }
 
 /* Card action buttons (edit + delete) */
 .card-actions {
@@ -433,13 +524,13 @@ main {
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
-  z-index: 2;
+  z-index: 4;
 }
 
 .card-action-btn {
   width: 26px;
   height: 26px;
-  background: rgba(255,255,255,0.92);
+  background: rgba(255,255,255,0.95);
   border: 1px solid rgba(212, 82, 122, 0.2);
   color: var(--text-secondary);
   border-radius: 50%;
@@ -449,6 +540,7 @@ main {
   opacity: 0;
   transition: opacity var(--transition), background var(--transition), color var(--transition), border-color var(--transition);
   backdrop-filter: blur(4px);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
 }
 
 .book-card:hover .card-action-btn { opacity: 1; }
